@@ -76,6 +76,11 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<!-- Lombok - Changed scope to default (compile) -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -111,6 +116,7 @@
 					</excludes>
 				</configuration>
 			</plugin>
+
 
 			<!-- Maven Compiler Plugin with Lombok annotation processor -->
 			<plugin>

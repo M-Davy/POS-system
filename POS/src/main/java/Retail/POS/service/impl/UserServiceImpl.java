@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,10 @@ public class UserServiceImpl implements UserService {
     public User getUserFromJwtToken(String token) throws UserException {
         String email = jwtProvider.getEmailFromToken(token);
         User user = userRepository.findByEmail(email);
+
+        if (Objects.equals(user.getRole(), "ROLE_ADMIN")) {
+            throw new UserException("Admin users are not allowed to perform this action");
+        }
 
         if(user == null) {
             throw new UserException("User with email " + email + " not found");
