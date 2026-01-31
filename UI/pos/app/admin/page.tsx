@@ -194,7 +194,7 @@ function InventorySection() {
 
     let cleanCode = formData.code;
   if (formData.type === 'WEIGHED' && cleanCode.length === 13 && cleanCode.startsWith('20')) {
-    cleanCode = cleanCode.substring(2, 7);
+    cleanCode = cleanCode.substring(2, 7);  
   }
     try {
 
@@ -209,7 +209,7 @@ function InventorySection() {
       const product = await productAPI.create(productData);
       await inventoryAPI.create({
         productId: product.id,
-        quantity: parseInt(formData.stock)
+        quantity: parseFloat(formData.stock)
       });
       loadInventory();
       setShowAdd(false);
@@ -221,7 +221,7 @@ function InventorySection() {
   async function handleEdit(updatedData: any) {
     try {
       await inventoryAPI.update(updatedData.inventoryId, {
-        quantity: parseInt(updatedData.stock)
+        quantity: parseFloat(updatedData.stock)
       });
       await productAPI.update(updatedData.productId, {
         name: updatedData.name,
@@ -275,7 +275,12 @@ function InventorySection() {
                 <td style={{ padding: 12, color: "#64748b", fontSize: 13 }}>{item.product?.code}</td>
                 <td style={{ padding: 12, fontWeight: 600 }}>{item.product?.name}</td>
                 <td style={{ padding: 12 }}>Ksh {item.product?.sellingPrice?.toFixed(2)}</td>
-                <td style={{ padding: 12 }}>{item.quantity}</td>
+                <td style={{ padding: 12 }}>
+                                  {item.product?.type === 'WEIGHED' 
+                                    ? `${item.quantity.toFixed(3)} kg` 
+                                    : `${Math.round(item.quantity)} pcs`
+                                  }
+                                </td>
                 <td style={{ padding: 12 }}>
                   <span style={{ 
                     padding: "4px 8px", borderRadius: 6, fontSize: 12, fontWeight: 700,
@@ -391,7 +396,10 @@ export default function AdminPage() {
 
 // --- Modal Component ---
 function ProductModal({ onClose, onSave, product, title }: any) {
-  const [form, setForm] = useState(product || { name: "", price: "", stock: "", code: "", type:"FIXED" });
+  const [form, setForm] = useState(product || { name: "", price: "", stock: "", code: "", type: "FIXED" });
+
+  // Determine if the product is sold by weight
+  const isWeighed = form.type === "WEIGHED";
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 50 }}>
@@ -425,18 +433,28 @@ function ProductModal({ onClose, onSave, product, title }: any) {
         
         <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
           <div style={{ flex: 1 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>Price (Ksh)</label>
+            {/* Display "per KG" if weighed to guide the user */}
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>
+              Price {isWeighed ? "(per KG)" : "(Ksh)"}
+            </label>
             <input 
               type="number" 
+              step="0.01"
               style={{ width: "100%", padding: 10, border: "1px solid #e2e8f0", borderRadius: 8 }} 
               value={form.price} 
               onChange={e => setForm({...form, price: e.target.value})} 
             />
           </div>
           <div style={{ flex: 1 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>Stock Qty</label>
+            {/* Display "kg" if weighed to guide the user */}
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>
+              Stock {isWeighed ? "(kg)" : "(qty)"}
+            </label>
             <input 
               type="number" 
+              // CRITICAL: step="0.001" allows decimals (grams) for weight. 
+              // step="1" forces whole numbers for fixed items.
+              step={isWeighed ? "0.001" : "1"} 
               style={{ width: "100%", padding: 10, border: "1px solid #e2e8f0", borderRadius: 8 }} 
               value={form.stock} 
               onChange={e => setForm({...form, stock: e.target.value})} 
