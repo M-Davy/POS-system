@@ -275,7 +275,6 @@ function OrdersSection() {
         </div>
         <div className="flex items-center space-x-4">
           <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search orders..."
@@ -474,7 +473,6 @@ function InventorySection() {
       <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search by name or code..."
