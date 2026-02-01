@@ -20,7 +20,8 @@ import {
   FaSignOutAlt,
   FaUserCircle,
   FaBars,
-  FaTimes
+  FaTimes,
+  FaSpinner
 } from "react-icons/fa";
 
 // --- Dashboard Section ---
@@ -65,23 +66,18 @@ function DashboardSection() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-48"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded-xl"></div>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-96 bg-gray-200 rounded-xl"></div>
-          <div className="h-96 bg-gray-200 rounded-xl"></div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <FaSpinner className="h-12 w-12 text-emerald-500 animate-spin mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700">Loading Dashboard...</h3>
+          <p className="text-gray-500">Fetching your store statistics</p>
         </div>
       </div>
     );
   }
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-8 h-full">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -211,7 +207,6 @@ function StatCard({ title, value, icon, trend, trendValue, color }: any) {
             trend === 'up' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
           }`}>
             {trend === 'up' ? <FaArrowUp className="w-3 h-3" /> : <FaArrowDown className="w-3 h-3" />}
-            <span>{trendValue}</span>
           </div>
         </div>
         
@@ -257,15 +252,18 @@ function OrdersSection() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-8 bg-gray-200 rounded w-48"></div>
-        <div className="h-96 bg-gray-200 rounded-2xl"></div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <FaSpinner className="h-12 w-12 text-emerald-500 animate-spin mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700">Loading Transactions...</h3>
+          <p className="text-gray-500">Fetching your order history</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 h-full">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Transaction History</h2>
@@ -273,6 +271,7 @@ function OrdersSection() {
         </div>
         <div className="flex items-center space-x-4">
           <div className="relative">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search orders..."
@@ -293,7 +292,7 @@ function OrdersSection() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden flex-1 min-h-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -438,19 +437,18 @@ function InventorySection() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-48"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-40 bg-gray-200 rounded-xl"></div>
-          ))}
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <FaSpinner className="h-12 w-12 text-emerald-500 animate-spin mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700">Loading Inventory...</h3>
+          <p className="text-gray-500">Fetching your product catalog</p>
         </div>
       </div>
     );
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 h-full">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Inventory Management</h2>
@@ -466,9 +464,10 @@ function InventorySection() {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+      <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex-1 min-h-0 flex flex-col">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="relative">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search by name or code..."
@@ -495,15 +494,17 @@ function InventorySection() {
 
         {/* Inventory Grid */}
         {filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-4xl mb-4">📦</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-            <p className="text-gray-600">Try adjusting your search or add a new product</p>
+          <div className="text-center py-12 flex-1 flex items-center justify-center">
+            <div>
+              <div className="text-gray-400 text-4xl mb-4">📦</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+              <p className="text-gray-600">Try adjusting your search or add a new product</p>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto flex-1 pb-4">
             {filtered.map(item => (
-              <div key={item.id} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div key={item.id} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-fit">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <div className="flex items-center space-x-2 mb-2">
@@ -555,10 +556,6 @@ function InventorySection() {
                       }
                     </span>
                   </div>
-                  
-                  {/* Stock Level Indicator */}
-                  <div className="pt-2">
-                  </div>
                 </div>
               </div>
             ))}
@@ -583,11 +580,21 @@ function InventorySection() {
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const router = useRouter();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     router.push("/login");
+  };
+
+  const handleTabChange = (tabId: string) => {
+    if (tabId !== activeTab) {
+      setIsTransitioning(true);
+      setActiveTab(tabId);
+      // Simulate a small delay for smooth transition
+      setTimeout(() => setIsTransitioning(false), 100);
+    }
   };
 
   const menuItems = [
@@ -597,9 +604,9 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 fixed inset-0 overflow-hidden">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-40">
         <div className="flex items-center space-x-3">
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-lg hover:bg-gray-100">
             {sidebarOpen ? <FaTimes /> : <FaBars />}
@@ -611,24 +618,25 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="flex">
+      <div className="flex h-full pt-[57px] lg:pt-0">
         {/* Sidebar */}
         <aside className={`
           fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:flex lg:flex-col
+          h-full
         `}>
           <div className="p-6 border-b border-gray-200 hidden lg:block">
             <h1 className="text-2xl font-bold text-emerald-600">RETAIL POS</h1>
             <p className="text-sm text-gray-600 mt-1">Administrator Panel</p>
           </div>
           
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-4 overflow-y-auto">
             <nav className="space-y-1">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveTab(item.id);
+                    handleTabChange(item.id);
                     setSidebarOpen(false);
                   }}
                   className={`
@@ -675,10 +683,24 @@ export default function AdminPage() {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-8">
-          {activeTab === "Dashboard" && <DashboardSection />}
-          {activeTab === "Inventory" && <InventorySection />}
-          {activeTab === "Orders" && <OrdersSection />}
+        <main className="flex-1 p-4 lg:p-8 overflow-hidden flex flex-col">
+          <div className={`flex-1 overflow-hidden transition-opacity duration-200 ${
+            isTransitioning ? 'opacity-50' : 'opacity-100'
+          }`}>
+            {activeTab === "Dashboard" && <DashboardSection />}
+            {activeTab === "Inventory" && <InventorySection />}
+            {activeTab === "Orders" && <OrdersSection />}
+          </div>
+          
+          {/* Transition Overlay */}
+          {isTransitioning && (
+            <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10">
+              <div className="text-center">
+                <FaSpinner className="h-8 w-8 text-emerald-500 animate-spin mx-auto mb-2" />
+                <p className="text-gray-600">Loading...</p>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
@@ -713,7 +735,7 @@ function ProductModal({ onClose, onSave, product, title }: any) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-md">
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -795,6 +817,7 @@ function ProductModal({ onClose, onSave, product, title }: any) {
                 Price {isWeighed && "(per kg)"}
               </label>
               <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">Ksh</span>
                 <input
                   type="number"
                   step="0.01"
@@ -835,7 +858,12 @@ function ProductModal({ onClose, onSave, product, title }: any) {
                 }
               `}
             >
-              {loading ? 'Saving...' : 'Save Product'}
+              {loading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <FaSpinner className="h-4 w-4 animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              ) : 'Save Product'}
             </button>
             <button
               onClick={onClose}
