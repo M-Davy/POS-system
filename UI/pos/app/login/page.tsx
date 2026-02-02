@@ -282,7 +282,7 @@ export default function LoginPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white tracking-tight">ESIT GROCERIES</h1>
-              <p className="text-emerald-200 text-sm mt-1 font-medium">Fresh Products, Better Living</p>
+              <p className="text-emerald-200 text-sm mt-1 font-medium">Fresh From the Farm</p>
             </div>
           </div>
           
