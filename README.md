@@ -946,5 +946,5 @@ For issues, questions, or suggestions:
 
 **Last Updated:** February 10, 2026
 **Version:** 0.0.1 (SNAPSHOT)
-**Authors:** Development Team
+**Authors:** Davis Mutuku and Jesse Kariuki
 
