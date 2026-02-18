@@ -630,7 +630,6 @@ export default function CashierDashboard() {
                     <span>Barcode Scanner</span>
                   </label>
                   <div className="relative">
-                    <FaQrcode className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-emerald-400" />
                     <input
                       type="text"
                       value={barcode}
@@ -693,7 +692,6 @@ export default function CashierDashboard() {
                     <div>
                       <label className="block text-sm font-semibold text-gray-300 mb-2">Phone Number (Optional)</label>
                       <div className="relative">
-                        <FaPhone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <input
                           type="tel"
                           value={phone}
