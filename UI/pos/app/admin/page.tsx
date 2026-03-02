@@ -337,6 +337,7 @@ function OrdersSection({ isDarkMode }: { isDarkMode: boolean }) {
         <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className={themeClasses.text.muted} />
             </div>
             <input
               type="text"
@@ -498,6 +499,10 @@ function InventorySection({ isDarkMode }: { isDarkMode: boolean }) {
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState<any>(null);
   const [filter, setFilter] = useState("all");
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; item: any }>({
+    isOpen: false,
+    item: null
+  });
 
   const loadInventory = useCallback(async () => {
     try {
@@ -572,6 +577,22 @@ function InventorySection({ isDarkMode }: { isDarkMode: boolean }) {
     }
   }
 
+  async function handleDelete(item: any) {
+    try {
+      setLoading(true);
+      // First delete the inventory item
+      await inventoryAPI.delete(item.id);
+      // Then delete the associated product
+      await productAPI.delete(item.product?.id);
+      // Refresh the inventory list
+      await loadInventory();
+    } catch (err: any) {
+      alert(`Delete failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const themeClasses = {
     background: isDarkMode ? "bg-gray-800" : "bg-white",
     border: isDarkMode ? "border-gray-700" : "border-gray-100",
@@ -622,6 +643,7 @@ function InventorySection({ isDarkMode }: { isDarkMode: boolean }) {
         <div className="space-y-3 md:space-y-0">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className={themeClasses.text.muted} />
             </div>
             <input
               type="text"
@@ -663,10 +685,19 @@ function InventorySection({ isDarkMode }: { isDarkMode: boolean }) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {filtered.map(item => (
-              <div key={item.id} className={`${themeClasses.card} rounded-xl md:rounded-2xl p-4 md:p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}>
-                <div className="flex justify-between items-start mb-4">
+              <div key={item.id} className={`${themeClasses.card} rounded-xl md:rounded-2xl p-4 md:p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative group`}>
+                {/* Delete Button - Positioned absolutely in the top right */}
+                <button 
+                  onClick={() => setDeleteConfirmation({ isOpen: true, item })}
+                  className="absolute top-4 right-4 p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  title="Delete product"
+                >
+                  <FaTrash className="text-red-500 hover:text-red-600" size={16} />
+                </button>
+
+                <div className="flex justify-between items-start mb-4 pr-8">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex items-center space-x-2 mb-2 flex-wrap gap-2">
                       <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${
                         item.product?.type === 'WEIGHED' 
                           ? (isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-700')
@@ -706,7 +737,7 @@ function InventorySection({ isDarkMode }: { isDarkMode: boolean }) {
                   <div className="flex justify-between items-center">
                     <span className={`${themeClasses.text.secondary} text-sm`}>Price</span>
                     <span className={`font-bold ${themeClasses.text.primary} text-base md:text-lg`}>
-                       {item.product?.sellingPrice?.toFixed(2)}
+                      Ksh {item.product?.sellingPrice?.toFixed(2)}
                       {item.product?.type === 'WEIGHED' && <span className={`text-xs ${themeClasses.text.muted} ml-1`}>/kg</span>}
                     </span>
                   </div>
@@ -725,6 +756,18 @@ function InventorySection({ isDarkMode }: { isDarkMode: boolean }) {
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      {deleteConfirmation.isOpen && (
+        <ConfirmationModal
+          isOpen={deleteConfirmation.isOpen}
+          onClose={() => setDeleteConfirmation({ isOpen: false, item: null })}
+          onConfirm={() => handleDelete(deleteConfirmation.item)}
+          title="Delete Product"
+          message={`Are you sure you want to delete "${deleteConfirmation.item?.product?.name}"? This action cannot be undone.`}
+          isDarkMode={isDarkMode}
+        />
+      )}
 
       {showAdd && (
         <ProductModal 
@@ -932,9 +975,8 @@ export default function AdminPage() {
             {activeTab === "Orders" && <OrdersSection isDarkMode={isDarkMode} />}
           </div>
           
-          {/* Mobile Bottom Navigation (Only on mobile) */}
-                    {/* Mobile Bottom Navigation - Enhanced Visibility */}
-                    <div className="lg:hidden mt-4">
+          {/* Mobile Bottom Navigation - Enhanced Visibility */}
+          <div className="lg:hidden mt-4">
             <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl border ${themeClasses.border}`}>
               <div className="flex items-center justify-around p-2">
                 {menuItems.map((item) => (
@@ -974,6 +1016,7 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+
           {/* Transition Overlay */}
           {isTransitioning && (
             <div className={`absolute inset-0 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} bg-opacity-80 flex items-center justify-center z-10`}>
@@ -1170,6 +1213,57 @@ function ProductModal({ onClose, onSave, product, title, isDarkMode }: any) {
               className={`flex-1 px-4 py-3 md:px-6 md:py-3 rounded-xl font-semibold transition-colors duration-200 text-sm md:text-base ${themeClasses.button}`}
             >
               Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Confirmation Modal Component ---
+function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, isDarkMode }: any) {
+  if (!isOpen) return null;
+
+  const themeClasses = {
+    background: isDarkMode ? "bg-gray-800" : "bg-white",
+    border: isDarkMode ? "border-gray-700" : "border-gray-200",
+    text: {
+      primary: isDarkMode ? "text-gray-100" : "text-gray-900",
+      secondary: isDarkMode ? "text-gray-400" : "text-gray-600",
+    },
+    button: {
+      cancel: isDarkMode 
+        ? "bg-gray-700 border-gray-600 text-gray-100 hover:bg-gray-600" 
+        : "border-gray-300 text-gray-700 hover:bg-gray-50",
+      delete: "bg-gradient-to-r from-red-600 to-rose-500 text-white hover:from-red-700 hover:to-rose-600"
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className={`${themeClasses.background} rounded-xl md:rounded-2xl w-full max-w-md ${themeClasses.border}`}>
+        <div className="p-6">
+          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+            <FaTrash className="text-red-600" size={20} />
+          </div>
+          <h3 className={`text-lg font-bold ${themeClasses.text.primary} text-center mb-2`}>{title}</h3>
+          <p className={`${themeClasses.text.secondary} text-center mb-6`}>{message}</p>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-colors duration-200 ${themeClasses.button.cancel}`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                onConfirm();
+                onClose();
+              }}
+              className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${themeClasses.button.delete}`}
+            >
+              Delete
             </button>
           </div>
         </div>
