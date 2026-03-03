@@ -587,7 +587,8 @@ function InventorySection({ isDarkMode }: { isDarkMode: boolean }) {
       // Refresh the inventory list
       await loadInventory();
     } catch (err: any) {
-      alert(`Delete failed: ${err.message}`);
+      console.error(`Delete failed: ${err.message}`);
+      await loadInventory();
     } finally {
       setLoading(false);
     }

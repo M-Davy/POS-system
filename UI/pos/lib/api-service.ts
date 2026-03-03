@@ -123,18 +123,15 @@ export const productAPI = {
     return response.json();
   },
 
-  delete: async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to delete product');
-    }
-    
-    return response.json();
-  },
+ delete: async (id: number) => {
+  const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error('Failed to delete product');
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
+},
 
   uploadImage: async (productId: number, imageFile: File) => {
     const formData = new FormData();
@@ -239,17 +236,14 @@ export const inventoryAPI = {
   },
 
   delete: async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/inventory/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to delete inventory');
-    }
-    
-    return response.json();
-  },
+  const response = await fetch(`${API_BASE_URL}/api/inventory/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error('Failed to delete inventory');
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
+},
 };
 
 // Order API
