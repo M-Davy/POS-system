@@ -1583,7 +1583,7 @@ function ProductModal({ onClose, onSave, product, title, isDarkMode }: any) {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setForm({ ...form, type: "FIXED" })}
+                onClick={() => setForm((prev: any) => ({ ...prev, type: "FIXED" }))}
                 className={`p-3 md:p-4 rounded-xl border text-center transition-all text-sm md:text-base ${
                   !isWeighed
                     ? "border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold"
@@ -1594,7 +1594,7 @@ function ProductModal({ onClose, onSave, product, title, isDarkMode }: any) {
               </button>
               <button
                 type="button"
-                onClick={() => setForm({ ...form, type: "WEIGHED" })}
+                onClick={() => setForm((prev: any) => ({ ...prev, type: "WEIGHED" }))}
                 className={`p-3 md:p-4 rounded-xl border text-center transition-all text-sm md:text-base ${
                   isWeighed
                     ? "border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold"
