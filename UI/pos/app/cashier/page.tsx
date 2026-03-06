@@ -608,7 +608,7 @@ export default function CashierDashboard() {
                             {/* Quantity Controls */}
                             <div className="flex items-center space-x-3">
                               <button
-                                onClick={() => changeQty(item.id, -0.5)}
+                                onClick={() => changeQty(item.id, -0.25)}
                                 className="w-8 h-8 flex items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors shadow-sm"
                               >
                                 <span className="text-white font-bold">-</span>
@@ -640,7 +640,7 @@ export default function CashierDashboard() {
                               </div>
 
                               <button
-                                onClick={() => changeQty(item.id, 0.5)}
+                                onClick={() => changeQty(item.id, 0.25)}
                                 className="w-8 h-8 flex items-center justify-center bg-emerald-700 hover:bg-emerald-600 rounded-lg transition-colors shadow-sm"
                               >
                                 <span className="text-white font-bold">+</span>
