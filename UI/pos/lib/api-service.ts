@@ -411,3 +411,104 @@ export interface CartItemDto {
   productSku: string;
   unitPrice: number;
 }
+
+// ============================================================
+// ADD THESE TO YOUR EXISTING api-service.ts FILE
+// ============================================================
+
+// Purchase API
+export const purchaseAPI = {
+  create: async (purchaseData: {
+    productId: number;
+    quantityBought: number;
+    unit: string;
+    totalCost: number;
+    notes?: string;
+  }) => {
+    const response = await fetch(`${API_BASE_URL}/api/purchases`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(purchaseData),
+    });
+    if (!response.ok) throw new Error('Failed to create purchase');
+    return response.json();
+  },
+
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/purchases`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch purchases');
+    return response.json();
+  },
+
+  getByMonth: async (year: number, month: number) => {
+    const response = await fetch(
+      `${API_BASE_URL}/api/purchases/monthly?year=${year}&month=${month}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!response.ok) throw new Error('Failed to fetch monthly purchases');
+    return response.json();
+  },
+};
+
+// Report API
+export const reportAPI = {
+  getMonthlyReport: async (year: number, month: number) => {
+    const response = await fetch(
+      `${API_BASE_URL}/api/reports/monthly?year=${year}&month=${month}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!response.ok) throw new Error('Failed to fetch monthly report');
+    return response.json();
+  },
+
+  getAllTimeProfit: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/reports/profit`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch profit report');
+    return response.json();
+  },
+};
+
+
+
+export interface PurchaseResponse {
+  id: number;
+  productId: number;
+  productName: string;
+  productCode: string;
+  quantityBought: number;
+  unit: string;
+  totalCost: number;
+  costPerUnit: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface ProductProfitDto {
+  productId: number;
+  productName: string;
+  productCode: string;
+  totalCost: number;
+  totalRevenue: number;
+  profit: number;
+  marginPercent: number;
+  totalBought: number;
+  buyingUnit: string;
+  totalSold: number;
+  sellingUnit: string;
+  isLossMaking: boolean;
+}
+
+export interface MonthlyReportDto {
+  month: string;
+  totalRevenue: number;
+  totalCost: number;
+  netProfit: number;
+  overallMargin: number;
+  productBreakdown: ProductProfitDto[];
+  topPerformers: ProductProfitDto[];
+  lossMakers: ProductProfitDto[];
+}

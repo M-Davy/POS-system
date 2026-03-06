@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { inventoryAPI, orderAPI, productAPI } from "@/lib/api-service";
 import { useRouter } from "next/navigation";
+import { PurchasesSection, ReportsSection } from "@/app/PurchasesAndReportsSection"
+import { FaShoppingBag, FaChartPie } from "react-icons/fa";
 import {
   FaChartLine,
   FaBox,
@@ -1233,6 +1235,8 @@ export default function AdminPage() {
     { id: "Dashboard", icon: <FaChartLine />, label: "Dashboard" },
     { id: "Inventory", icon: <FaBox />, label: "Inventory" },
     { id: "Orders", icon: <FaReceipt />, label: "Transactions" },
+    { id: "Purchases", icon: <FaShoppingBag />, label: "Purchases" },
+    { id: "Reports", icon: <FaChartPie />, label: "Reports" },
   ];
 
   const themeClasses = {
@@ -1423,6 +1427,8 @@ export default function AdminPage() {
             {activeTab === "Orders" && (
               <OrdersSection isDarkMode={isDarkMode} />
             )}
+            {activeTab === "Purchases" && <PurchasesSection isDarkMode={isDarkMode} />}
+            {activeTab === "Reports" && <ReportsSection isDarkMode={isDarkMode} />}
           </div>
 
           {/* Mobile Bottom Navigation - Enhanced Visibility */}
