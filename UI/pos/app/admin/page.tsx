@@ -369,7 +369,6 @@ function OrdersSection({ isDarkMode }: { isDarkMode: boolean }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
 
-
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -431,7 +430,7 @@ function OrdersSection({ isDarkMode }: { isDarkMode: boolean }) {
   }
 
   return (
-    <section className="h-full flex flex-col">
+    <section className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex flex-col mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -478,7 +477,7 @@ function OrdersSection({ isDarkMode }: { isDarkMode: boolean }) {
       </div>
 
       {/* Mobile Card View / Desktop Table View */}
-      <div className="md:hidden">
+      <div className="md:hidden flex-1 min-h-0 overflow-y-auto">
         {/* Mobile Card View */}
         <div
           className={`${themeClasses.background} rounded-xl shadow-lg overflow-hidden flex-1 flex flex-col`}
@@ -595,11 +594,11 @@ function OrdersSection({ isDarkMode }: { isDarkMode: boolean }) {
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block">
+      <div className="hidden md:flex flex-col flex-1 min-h-0">
         <div
           className={`${themeClasses.background} ${themeClasses.border} rounded-2xl shadow-lg overflow-hidden flex-1 flex flex-col`}
         >
-          <div className="overflow-x-auto flex-1">
+          <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
             <table className="w-full">
               <thead className={`${themeClasses.headerBg} sticky top-0 z-10`}>
                 <tr>
@@ -722,7 +721,7 @@ function OrdersSection({ isDarkMode }: { isDarkMode: boolean }) {
       </div>
       {totalPages > 1 && (
         <div
-          className={`flex items-center justify-between px-4 py-3 mt-4 rounded-xl ${themeClasses.background} border ${themeClasses.border}`}
+          className={`flex-shrink-0 flex items-center justify-between px-4 py-3 mt-4 rounded-xl ${themeClasses.background} border ${themeClasses.border}`}
         >
           <p className={`text-sm ${themeClasses.text.secondary}`}>
             Page{" "}
@@ -889,7 +888,6 @@ function InventorySection({ isDarkMode }: { isDarkMode: boolean }) {
         code: updatedData.code,
         sellingPrice: parseFloat(updatedData.price),
         type: updatedData.type,
-
       });
       loadInventory();
       setShowEdit(null);
@@ -1144,7 +1142,7 @@ function InventorySection({ isDarkMode }: { isDarkMode: boolean }) {
                     >
                       {item.product?.type === "WEIGHED"
                         ? `${item.quantity.toFixed(3)} kg`
-                        : `${item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(2)} pcs`}
+                        : `${item.quantity.toFixed(2)} pcs`}
                     </span>
                   </div>
                 </div>
@@ -1584,7 +1582,9 @@ function ProductModal({ onClose, onSave, product, title, isDarkMode }: any) {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setForm((prev: any) => ({ ...prev, type: "FIXED" }))}
+                onClick={() =>
+                  setForm((prev: any) => ({ ...prev, type: "FIXED" }))
+                }
                 className={`p-3 md:p-4 rounded-xl border text-center transition-all text-sm md:text-base ${
                   !isWeighed
                     ? "border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold"
@@ -1595,7 +1595,9 @@ function ProductModal({ onClose, onSave, product, title, isDarkMode }: any) {
               </button>
               <button
                 type="button"
-                onClick={() => setForm((prev: any) => ({ ...prev, type: "WEIGHED" }))}
+                onClick={() =>
+                  setForm((prev: any) => ({ ...prev, type: "WEIGHED" }))
+                }
                 className={`p-3 md:p-4 rounded-xl border text-center transition-all text-sm md:text-base ${
                   isWeighed
                     ? "border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold"
