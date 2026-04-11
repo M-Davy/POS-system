@@ -1,5 +1,10 @@
 package Retail.POS.exceptions;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -8,11 +13,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
 import Retail.POS.payload.response.ApiResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Global exception handler for the POS application
@@ -162,6 +162,7 @@ public class GlobalExceptionHandler {
             RuntimeException ex,
             WebRequest request) {
         logger.error("Unexpected runtime error", ex);
+        ex.printStackTrace();  // Log full stack trace
         ApiResponse response = new ApiResponse(false, "An unexpected error occurred");
         response.setStatus("INTERNAL_ERROR");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -175,6 +176,7 @@ public class GlobalExceptionHandler {
             Exception ex,
             WebRequest request) {
         logger.error("Unexpected error", ex);
+        ex.printStackTrace();  // Log full stack trace
         ApiResponse response = new ApiResponse(false, "An unexpected error occurred");
         response.setStatus("ERROR");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
