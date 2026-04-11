@@ -1,5 +1,14 @@
 package Retail.POS.service.impl;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import Retail.POS.domain.OrderStatus;
 import Retail.POS.exceptions.InsufficientStockException;
 import Retail.POS.mapper.OrderMapper;
@@ -16,25 +25,20 @@ import Retail.POS.repository.OrderRepository;
 import Retail.POS.repository.ProductRepository;
 import Retail.POS.service.OrderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class OrderServiceImpl implements OrderService {
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class);
+
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final InventoryRepository inventoryRepository;
 
     @Override
+    @Transactional(noRollbackFor = {InsufficientStockException.class})
     public OrderResponseDto createOrder(OrderRequestDto request) {
 
         List<OrderItem> orderItems = new ArrayList<>();

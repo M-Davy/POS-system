@@ -24,6 +24,10 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    public GlobalExceptionHandler() {
+        logger.info("=== GlobalExceptionHandler initialized ===");
+    }
+
     /**
      * Handle insufficient stock errors (e.g., when trying to sell more items than available)
      */
@@ -31,9 +35,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse> handleInsufficientStock(
             InsufficientStockException ex,
             WebRequest request) {
-        logger.warn("Insufficient stock error: {}", ex.getMessage());
+        logger.warn("[HANDLER] Caught InsufficientStockException: {}", ex.getMessage());
+        logger.warn("[HANDLER] Request: {}", request.getDescription(false));
+        
         ApiResponse response = new ApiResponse(false, ex.getMessage());
         response.setStatus("INSUFFICIENT_STOCK");
+        
+        logger.warn("[HANDLER] Returning 409 response with status: INSUFFICIENT_STOCK");
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
@@ -161,10 +169,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse> handleRuntime(
             RuntimeException ex,
             WebRequest request) {
-        logger.error("Unexpected runtime error", ex);
+        logger.error("[HANDLER] Caught RuntimeException (not specifically handled): {}", ex.getClass().getName());
+        logger.error("[HANDLER] Message: {}", ex.getMessage());
+        logger.error("[HANDLER] Is InsufficientStockException?: {}", ex instanceof InsufficientStockException);
+        
         ex.printStackTrace();  // Log full stack trace
-        ApiResponse response = new ApiResponse(false, "An unexpected error occurred");
-        response.setStatus("INTERNAL_ERROR");
+        ApiResponse response = new ApiResponse(false, "An unexpected runtime error occurred: " + ex.getMessage());
+        response.setStatus("RUNTIME_ERROR");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
