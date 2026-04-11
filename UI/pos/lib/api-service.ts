@@ -3,6 +3,21 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
+// Custom error class for API responses
+export class ApiError extends Error {
+  constructor(
+    public message: string,
+    public status?: string,
+    public statusCode?: number,
+    public fieldErrors?: Record<string, string>
+  ) {
+    super(message);
+    this.name = 'ApiError';
+    // Ensure the error is properly constructed
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
 // Helper function to get auth token
 export const getAuthToken = (): string | null => {
   if (typeof window !== 'undefined') {
@@ -261,14 +276,38 @@ export const orderAPI = {
     });
     
     if (!response.ok) {
-      if (response.status === 403) {
-        throw new Error('Authentication required. Please login again.');
+      console.log(`[DEBUG] Order API returned ${response.status}`, {
+        contentType: response.headers.get('content-type'),
+        status: response.status,
+      });
+      
+      try {
+        const errorData = await response.json();
+        console.log('[DEBUG] Error response JSON:', errorData);
+        console.log('[DEBUG] Status field:', errorData.status);
+        
+        // Use custom ApiError to preserve properties
+        throw new ApiError(
+          errorData.message || `Failed to create order (${response.status})`,
+          errorData.status,
+          response.status,
+          errorData.fieldErrors
+        );
+      } catch (e) {
+        console.error('[ERROR] Failed to parse error response:', e);
+        
+        // If it's already our ApiError, re-throw it
+        if (e instanceof ApiError) {
+          throw e;
+        }
+        
+        // Otherwise throw a generic one
+        throw new ApiError(
+          `Failed to create order (${response.status})`,
+          'UNKNOWN_ERROR',
+          response.status
+        );
       }
-      if (response.status === 401) {
-        throw new Error('Invalid or expired token. Please login again.');
-      }
-      const errorText = await response.text();
-      throw new Error(errorText || `Failed to create order (${response.status})`);
     }
     
     return response.json();

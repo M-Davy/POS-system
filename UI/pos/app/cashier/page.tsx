@@ -1,31 +1,27 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import {
-  FaSearch,
-  FaShoppingCart,
-  FaTrash,
-  FaPlus,
-  FaReceipt,
-  FaPhone,
-  FaMoneyBillWave,
-  FaCashRegister,
-  FaKey,
-  FaUserCircle,
-  FaBarcode,
-  FaTimes,
-  FaEllipsisH,
-  FaQrcode,
-  FaCalculator,
-} from "react-icons/fa";
 import {
   inventoryAPI,
-  scanAPI,
   orderAPI,
   productAPI,
-  type Product,
+  scanAPI,
   type CartItemDto,
+  type Product,
 } from "@/lib/api-service";
+import { useEffect, useRef, useState } from "react";
+import {
+  FaBarcode,
+  FaCashRegister,
+  FaEllipsisH,
+  FaMoneyBillWave,
+  FaPhone,
+  FaPlus,
+  FaReceipt,
+  FaShoppingCart,
+  FaTimes,
+  FaTrash,
+  FaUserCircle
+} from "react-icons/fa";
 
 interface CartItem extends Product {
   qty: number;
@@ -369,13 +365,37 @@ export default function CashierDashboard() {
       setTimeout(() => setSuccess(""), 3000);
     } catch (err: any) {
       console.error("Payment error:", err);
+      console.log("[DEBUG] Error properties:", {
+        name: err.name,
+        message: err.message,
+        status: err.status,
+        statusCode: err.statusCode,
+      });
 
-      if (err.message.includes("403") || err.message.includes("Forbidden")) {
+      // Check backend error status
+      if (err.status === 'INSUFFICIENT_STOCK') {
+        console.log("[DEBUG] Handling INSUFFICIENT_STOCK error");
+        setError("Not enough items in stock. Please reduce quantity.");
+      } else if (err.status === 'UNAUTHORIZED' || err.statusCode === 401) {
+        console.log("[DEBUG] Handling UNAUTHORIZED error");
+        setError("Authentication failed. Please login again.");
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 3000);
+      } else if (err.status === 'VALIDATION_FAILED') {
+        console.log("[DEBUG] Handling VALIDATION_FAILED error");
+        setError("Invalid input: " + err.message);
+      } else if (err.status === 'INVALID_OPERATION') {
+        console.log("[DEBUG] Handling INVALID_OPERATION error");
+        setError(err.message || "Cannot perform this operation at this time.");
+      } else if (err.message.includes("403") || err.message.includes("Forbidden")) {
+        console.log("[DEBUG] Handling 403 error from message");
         setError("Authentication failed. Please login again.");
         setTimeout(() => {
           window.location.href = "/login";
         }, 3000);
       } else {
+        console.log("[DEBUG] Handling generic error");
         setError(err.message || "Payment failed");
       }
 
