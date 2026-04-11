@@ -1,22 +1,35 @@
 package Retail.POS.controller;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import Retail.POS.domain.OrderStatus;
+import Retail.POS.exceptions.InsufficientStockException;
 import Retail.POS.payload.dto.OrderRequestDto;
 import Retail.POS.payload.dto.OrderResponseDto;
 import Retail.POS.payload.dto.TopProductDto;
+import Retail.POS.payload.response.ApiResponse;
 import Retail.POS.service.OrderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/orders")
 public class OrderController {
 
+    private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
     private final OrderService orderService;
 
     @GetMapping("/monthly/total")
@@ -32,10 +45,25 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderResponseDto> createOrder(
+    public ResponseEntity<?> createOrder(
             @RequestBody OrderRequestDto request
     ) {
-        return ResponseEntity.ok(orderService.createOrder(request));
+        try {
+            logger.info("[CONTROLLER] Creating order with {} items", request.getOrderItems().size());
+            OrderResponseDto order = orderService.createOrder(request);
+            logger.info("[CONTROLLER] Order created successfully: {}", order.getId());
+            return ResponseEntity.ok(order);
+        } catch (InsufficientStockException ex) {
+            logger.warn("[CONTROLLER] Caught InsufficientStockException: {}", ex.getMessage());
+            ApiResponse response = new ApiResponse(false, ex.getMessage());
+            response.setStatus("INSUFFICIENT_STOCK");
+            return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+        } catch (Exception ex) {
+            logger.error("[CONTROLLER] Unexpected error creating order", ex);
+            ApiResponse response = new ApiResponse(false, "Failed to create order: " + ex.getMessage());
+            response.setStatus("ERROR");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping

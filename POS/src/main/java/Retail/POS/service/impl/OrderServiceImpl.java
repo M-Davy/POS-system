@@ -31,14 +31,11 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class OrderServiceImpl implements OrderService {
 
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class);
-
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final InventoryRepository inventoryRepository;
 
     @Override
-    @Transactional(noRollbackFor = {InsufficientStockException.class})
     public OrderResponseDto createOrder(OrderRequestDto request) {
 
         List<OrderItem> orderItems = new ArrayList<>();
