@@ -264,54 +264,43 @@ export const inventoryAPI = {
 // Order API
 export const orderAPI = {
   create: async (orderData: {
-    orderItems: Array<{ productId: number; quantity: number }>;
-    paymentMethod: string;
-    phoneNumber?: string;
-    amountPaid?: number;
-  }) => {
-    const response = await fetch(`${API_BASE_URL}/api/orders`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(orderData),
-    });
+  orderItems: Array<{ productId: number; quantity: number }>;
+  paymentMethod: string;
+  phoneNumber?: string;
+  amountPaid?: number;
+}) => {
+  const response = await fetch(`${API_BASE_URL}/api/orders`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(orderData),
+  });
+
+  if (!response.ok) {
+    // Parse JSON separately, never inside a try that wraps our throw
+    let errorData: { message?: string; status?: string; fieldErrors?: Record<string, string> } = {};
     
-    if (!response.ok) {
-      console.log(`[DEBUG] Order API returned ${response.status}`, {
-        contentType: response.headers.get('content-type'),
-        status: response.status,
-      });
-      
-      try {
-        const errorData = await response.json();
-        console.log('[DEBUG] Error response JSON:', errorData);
-        console.log('[DEBUG] Status field:', errorData.status);
-        
-        // Use custom ApiError to preserve properties
-        throw new ApiError(
-          errorData.message || `Failed to create order (${response.status})`,
-          errorData.status,
-          response.status,
-          errorData.fieldErrors
-        );
-      } catch (e) {
-        console.error('[ERROR] Failed to parse error response:', e);
-        
-        // If it's already our ApiError, re-throw it
-        if (e instanceof ApiError) {
-          throw e;
-        }
-        
-        // Otherwise throw a generic one
-        throw new ApiError(
-          `Failed to create order (${response.status})`,
-          'UNKNOWN_ERROR',
-          response.status
-        );
-      }
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      errorData = await response.json();
     }
-    
-    return response.json();
-  },
+
+    console.log('[DEBUG] Order error response:', { 
+      httpStatus: response.status, 
+      apiStatus: errorData.status, 
+      message: errorData.message 
+    });
+
+    // Throw OUTSIDE any try/catch so it propagates cleanly
+    throw new ApiError(
+      errorData.message || `Request failed (${response.status})`,
+      errorData.status,        // e.g. "INSUFFICIENT_STOCK"
+      response.status,         // e.g. 409
+      errorData.fieldErrors
+    );
+  }
+
+  return response.json();
+},
 
   getAll: async () => {
     const response = await fetch(`${API_BASE_URL}/api/orders`, {
