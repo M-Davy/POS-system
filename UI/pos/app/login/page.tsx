@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { FaSignInAlt, FaEye, FaEyeSlash } from "react-icons/fa";
 import Image from "next/image";
-import Link from "next/link";
+import { useState } from "react";
+import { FaEye, FaEyeSlash, FaSignInAlt } from "react-icons/fa";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -12,6 +11,20 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [loading, setLoading] = useState(false);
+
+  const decodeToken = (token: string) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error('Failed to decode token:', e);
+      return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,20 +54,32 @@ export default function LoginPage() {
         const tokenToStore = result.data?.jwt || result.jwt || result.token;
         if (tokenToStore) {
           localStorage.setItem("token", tokenToStore);
+          
+          // Decode token to get role info
+          const decoded = decodeToken(tokenToStore);
+          if (decoded) {
+            localStorage.setItem("user", JSON.stringify({
+              email: decoded.email,
+              role: decoded.authorities
+            }));
+          }
         } else {
           console.error("No token found in response:", result);
-        }
-        
-        if (result.user) {
-          localStorage.setItem("user", JSON.stringify(result.user));
         }
 
         setMessage(result.message || "Login successful! Redirecting...");
         setMessageType("success");
 
         setTimeout(() => {
-          if (result.user && result.user.role === "ROLE_ADMIN") {
-            window.location.href = "/admin";
+          // Check role from decoded token
+          const tokenToCheck = result.data?.jwt || result.jwt || result.token;
+          if (tokenToCheck) {
+            const decoded = decodeToken(tokenToCheck);
+            if (decoded && decoded.authorities === "ROLE_ADMIN") {
+              window.location.href = "/admin";
+            } else {
+              window.location.href = "/cashier";
+            }
           } else {
             window.location.href = "/cashier";
           }
