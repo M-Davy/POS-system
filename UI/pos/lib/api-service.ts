@@ -52,7 +52,7 @@ export const authAPI = {
     const result = await response.json();
     
     // Store token - check for both jwt and token fields
-    const token = result.data?.jwt || result.data?.token || result.jwt || result.token;
+    const token = result.data?.jwt;
     if (token) {
       localStorage.setItem('token', token);
     }
