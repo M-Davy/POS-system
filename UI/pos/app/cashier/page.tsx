@@ -8,6 +8,12 @@ import {
   type CartItemDto,
   type Product,
 } from "@/lib/api-service";
+import {
+  defaultThermalPrinterSettings,
+  printWithThermalPrinter,
+  type ReceiptPayload,
+  type ThermalPrinterSettings,
+} from "@/lib/thermal-print";
 import { useEffect, useRef, useState } from "react";
 import {
   FaBarcode,
@@ -27,6 +33,14 @@ interface CartItem extends Product {
   qty: number;
 }
 
+const THERMAL_SETTINGS_KEY = "thermalPrinterSettings";
+const THERMAL_PRINTER_PRESET: ThermalPrinterSettings = {
+  enabled: true,
+  printerName: "E-POS",
+  paperWidth: "58",
+  fallbackToBrowser: true,
+};
+
 export default function CashierDashboard() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [barcode, setBarcode] = useState("");
@@ -43,6 +57,8 @@ export default function CashierDashboard() {
   const [success, setSuccess] = useState("");
   const [showProducts, setShowProducts] = useState(false);
   const [showPaymentSection, setShowPaymentSection] = useState(true);
+  const [thermalSettings, setThermalSettings] =
+    useState<ThermalPrinterSettings>(THERMAL_PRINTER_PRESET);
   const barcodeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -70,6 +86,35 @@ export default function CashierDashboard() {
 
     loadInventory();
   }, []);
+
+  useEffect(() => {
+    const savedSettings = localStorage.getItem(THERMAL_SETTINGS_KEY);
+    if (!savedSettings) {
+      setThermalSettings(THERMAL_PRINTER_PRESET);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(savedSettings);
+      const mergedSettings: ThermalPrinterSettings = {
+        ...defaultThermalPrinterSettings,
+        ...parsed,
+      };
+
+      // Auto-apply a safe preset if older local settings are empty/unconfigured.
+      if (!mergedSettings.printerName?.trim()) {
+        setThermalSettings(THERMAL_PRINTER_PRESET);
+      } else {
+        setThermalSettings(mergedSettings);
+      }
+    } catch {
+      setThermalSettings(THERMAL_PRINTER_PRESET);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(THERMAL_SETTINGS_KEY, JSON.stringify(thermalSettings));
+  }, [thermalSettings]);
 
   const loadInventory = async () => {
     try {
@@ -203,7 +248,49 @@ export default function CashierDashboard() {
     setCart((prev) => prev.filter((item) => item.id !== id));
   }
 
-  const printReceipt = () => {
+  const getCashierName = () => {
+    const rawUser = localStorage.getItem("user");
+    if (!rawUser) return "Cashier";
+
+    try {
+      const parsed = JSON.parse(rawUser);
+      return parsed?.name?.split(" ")[0] || "Cashier";
+    } catch {
+      return "Cashier";
+    }
+  };
+
+  const buildReceiptPayload = (orderId?: number): ReceiptPayload => {
+    const receiptDate = new Date();
+    const amountReceived =
+      paymentMethod === "cash" ? Number(cashGiven) || total : total;
+    const changeAmount = Math.max(0, amountReceived - total);
+
+    return {
+      storeName: "ESIT GROCERIES",
+      tagline: "Fresh from the Farm",
+      location: "Nairobi, Kenya",
+      printedAt: receiptDate,
+      receiptNo: orderId
+        ? String(orderId)
+        : receiptDate.getTime().toString().slice(-6),
+      items: cart.map((item) => ({
+        name: item.name,
+        qty: item.qty,
+        type: item.type,
+        total: item.sellingPrice * item.qty,
+      })),
+      subtotal: total,
+      amountPaid: amountReceived,
+      change: changeAmount,
+      grandTotal: total,
+      paymentMethod,
+      phone: paymentMethod === "mpesa" ? phone : undefined,
+      cashierName: getCashierName(),
+    };
+  };
+
+  const printReceiptBrowser = (payload: ReceiptPayload) => {
     const printWindow = window.open("", "_blank");
 
     if (!printWindow) {
@@ -211,18 +298,13 @@ export default function CashierDashboard() {
       return;
     }
 
-    const receiptDate = new Date();
-    const amountReceived =
-      paymentMethod === "cash" ? Number(cashGiven) || total : total;
-    const changeAmount = Math.max(0, amountReceived - total);
-
-    const itemRows = cart
+    const itemRows = payload.items
       .map(
         (item) => `
           <tr>
             <td style="font-size: 10px;">${item.name.substring(0, 20)}${item.name.length > 20 ? ".." : ""}</td>
             <td style="font-size: 10px; text-align: center;">${item.qty}${item.type === "WEIGHED" ? "kg" : ""}</td>
-            <td style="font-size: 10px; text-align: right;">${(item.sellingPrice * item.qty).toFixed(2)}</td>
+            <td style="font-size: 10px; text-align: right;">${item.total.toFixed(2)}</td>
           </tr>
         `,
       )
@@ -254,8 +336,8 @@ export default function CashierDashboard() {
               <div class="center bold" style="font-size: 14px;">ESIT GROCERIES</div>
               <div class="center" style="font-size: 9px; font-style: italic;">Fresh from the Farm</div>
               <div class="center" style="font-size: 8px;">Nairobi, Kenya</div>
-              <div class="center" style="font-size: 8px;">${receiptDate.toLocaleString()}</div>
-              <div class="center" style="font-size: 8px; margin-bottom: 5px;">Receipt #: ${Date.now().toString().slice(-6)}</div>
+              <div class="center" style="font-size: 8px;">${payload.printedAt.toLocaleString()}</div>
+              <div class="center" style="font-size: 8px; margin-bottom: 5px;">Receipt #: ${payload.receiptNo}</div>
               
               <div class="divider"></div>
               
@@ -276,20 +358,20 @@ export default function CashierDashboard() {
               
               <div style="display: flex; justify-content: space-between; font-size: 10px;">
                 <span class="bold">Subtotal:</span>
-                <span>Ksh ${total.toFixed(2)}</span>
+                <span>Ksh ${payload.subtotal.toFixed(2)}</span>
               </div>
               
               <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 3px;">
                 <span class="bold">Amount Paid:</span>
-                <span>Ksh ${amountReceived.toFixed(2)}</span>
+                <span>Ksh ${payload.amountPaid.toFixed(2)}</span>
               </div>
               
               ${
-                changeAmount > 0
+                payload.change > 0
                   ? `
                 <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 3px; color: #d00;">
                   <span class="bold">Change:</span>
-                  <span>Ksh ${changeAmount.toFixed(2)}</span>
+                  <span>Ksh ${payload.change.toFixed(2)}</span>
                 </div>
               `
                   : ""
@@ -299,16 +381,16 @@ export default function CashierDashboard() {
               
               <div style="display: flex; justify-content: space-between; font-size: 12px;" class="bold">
                 <span>GRAND TOTAL</span>
-                <span>Ksh ${total.toFixed(2)}</span>
+                <span>Ksh ${payload.grandTotal.toFixed(2)}</span>
               </div>
               
               <div class="divider"></div>
               
               <div class="center" style="font-size: 9px; margin-top: 10px;">
-                <div>Payment: ${paymentMethod.toUpperCase()}</div>
-                ${paymentMethod === "mpesa" && phone ? `<div>Phone: ${phone}</div>` : ""}
+                <div>Payment: ${payload.paymentMethod.toUpperCase()}</div>
+                ${payload.paymentMethod === "mpesa" && payload.phone ? `<div>Phone: ${payload.phone}</div>` : ""}
                 <div style="margin-top: 5px;">THANK YOU FOR YOUR PATRONAGE</div>
-                <div style="font-size: 8px; margin-top: 5px;">Items: ${cart.length} | Cashier: ${localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").name?.split(" ")[0] || "Cashier" : "Cashier"}</div>
+                <div style="font-size: 8px; margin-top: 5px;">Items: ${payload.items.length} | Cashier: ${payload.cashierName}</div>
               </div>
               
               <script>
@@ -321,6 +403,33 @@ export default function CashierDashboard() {
         `);
 
     printWindow.document.close();
+  };
+
+  const printReceipt = async (orderId?: number) => {
+    const receiptPayload = buildReceiptPayload(orderId);
+
+    if (!thermalSettings.enabled) {
+      printReceiptBrowser(receiptPayload);
+      return;
+    }
+
+    try {
+      await printWithThermalPrinter(receiptPayload, thermalSettings);
+      setSuccess("Receipt sent to thermal printer");
+    } catch (printErr: any) {
+      console.error("Thermal print failed:", printErr);
+
+      if (thermalSettings.fallbackToBrowser) {
+        setError(
+          `Thermal printer failed (${printErr?.message || "unknown"}). Falling back to browser print.`,
+        );
+        printReceiptBrowser(receiptPayload);
+      } else {
+        setError(
+          `Thermal printer failed: ${printErr?.message || "Unknown print error"}`,
+        );
+      }
+    }
   };
 
   const completePayment = async () => {
@@ -350,7 +459,7 @@ export default function CashierDashboard() {
 
       setSuccess(`Payment completed! Order #${order.id}`);
 
-      printReceipt();
+      await printReceipt(order.id);
 
       // Clear cart and reset
       setCart([]);
@@ -807,6 +916,104 @@ export default function CashierDashboard() {
                       </div>
                     </button>
                   </div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-700 bg-gray-900/40">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-200">
+                        Receipt Printing Mode
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Use direct thermal print (QZ Tray) or browser print.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() =>
+                        setThermalSettings((prev) => ({
+                          ...prev,
+                          enabled: !prev.enabled,
+                        }))
+                      }
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        thermalSettings.enabled
+                          ? "bg-emerald-600 text-white"
+                          : "bg-gray-700 text-gray-200"
+                      }`}
+                    >
+                      {thermalSettings.enabled ? "Thermal" : "Browser"}
+                    </button>
+                  </div>
+
+                  {thermalSettings.enabled && (
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                          Thermal Printer Name (exact OS printer name)
+                        </label>
+                        <input
+                          type="text"
+                          value={thermalSettings.printerName}
+                          onChange={(e) =>
+                            setThermalSettings((prev) => ({
+                              ...prev,
+                              printerName: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. XPrinter XP-58"
+                          className="w-full px-3 py-2.5 bg-gray-900/70 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() =>
+                            setThermalSettings((prev) => ({
+                              ...prev,
+                              paperWidth: "58",
+                            }))
+                          }
+                          className={`py-2 rounded-lg text-xs font-semibold transition-colors ${
+                            thermalSettings.paperWidth === "58"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-gray-800 text-gray-300 border border-gray-700"
+                          }`}
+                        >
+                          58mm paper
+                        </button>
+                        <button
+                          onClick={() =>
+                            setThermalSettings((prev) => ({
+                              ...prev,
+                              paperWidth: "80",
+                            }))
+                          }
+                          className={`py-2 rounded-lg text-xs font-semibold transition-colors ${
+                            thermalSettings.paperWidth === "80"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-gray-800 text-gray-300 border border-gray-700"
+                          }`}
+                        >
+                          80mm paper
+                        </button>
+                      </div>
+
+                      <label className="flex items-center gap-2 text-xs text-gray-300">
+                        <input
+                          type="checkbox"
+                          checked={thermalSettings.fallbackToBrowser}
+                          onChange={(e) =>
+                            setThermalSettings((prev) => ({
+                              ...prev,
+                              fallbackToBrowser: e.target.checked,
+                            }))
+                          }
+                          className="accent-emerald-500"
+                        />
+                        Fallback to browser print if thermal print fails
+                      </label>
+                    </div>
+                  )}
                 </div>
 
                 {/* Payment Input - Enhanced */}
